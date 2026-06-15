@@ -3,4 +3,5 @@ google-generativeai
 moviepy
 requests
 Pillow
-edge-tts
+pyTelegramBotAPI
+
