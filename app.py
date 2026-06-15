@@ -6,7 +6,6 @@ import subprocess
 # 0. التثبيت التلقائي للمكتبات والاعتمادات المتوافقة مع السيرفر (Fix Error)
 # =====================================================================
 def install_dependencies():
-    # قائمة المكتبات الشاملة للمنظومة بالكامل
     libraries = ["edge-tts", "moviepy", "requests", "pillow", "google-generativeai", "instagrapi", "playwright", "streamlit"]
     try:
         import streamlit
@@ -41,11 +40,10 @@ from playwright.sync_api import sync_playwright
 # 💡 اكتب مفتاحك هنا بين علامتين التنصيص عشان يثبت في السيرفر وميتسمحش أبداً
 MY_SAVED_KEY = "اكتب_مفتاح_جيميناي_هنا" 
 
-# تجهيز الذاكرة الموقتة لكل المنصات
 keys_to_init = {
     "api_key": MY_SAVED_KEY, "insta_user": "", "insta_pass": "",
     "fb_cookies": "", "yt_channel_id": "", "tele_token": "",
-    "tele_chat_id": "", "x_auth_token": ""
+    "tele_chat_id": "", "x_auth_token": "", "tiktok_status": "لم يتم ربط الملف بعد ❌"
 }
 for key, default_val in keys_to_init.items():
     if key not in st.session_state:
@@ -64,7 +62,21 @@ st.sidebar.header("⚙️ إعدادات الربط والـ APIs")
 
 gemini_input = st.sidebar.text_input("Gemini API Key", value=st.session_state["api_key"], type="password")
 
-st.sidebar.subheader("📱 ربط الحسابات")
+st.sidebar.subheader("📱 ربط الحسابات والمنصات")
+
+# تيك توك (إضافة خانة مخصصة ومطورة في الواجهة)
+st.sidebar.markdown("---")
+st.sidebar.write("🎵 **إعدادات تيك توك (TikTok):**")
+st.sidebar.info(f"حالة التفعيل الحالية: {st.session_state['tiktok_status']}")
+tiktok_file = st.sidebar.file_uploader("ارفع ملف tiktok_auth.json هنا لربطه بالسيرفر", type=["json"])
+
+if tiktok_file is not None:
+    with open("tiktok_auth.json", "wb") as f:
+        f.write(tiktok_file.get_contents())
+    st.session_state["tiktok_status"] = "الملف جاهز ومفعّل تلقائياً! ✅"
+st.sidebar.markdown("---")
+
+# باقي المنصات
 insta_user_input = st.sidebar.text_input("اسم مستخدم انستجرام", value=st.session_state["insta_user"])
 insta_pass_input = st.sidebar.text_input("كلمة سر انستجرام", value=st.session_state["insta_pass"], type="password")
 fb_cookies_input = st.sidebar.text_input("فيسبوك Cookies (الاختيارية)", value=st.session_state["fb_cookies"], type="password")
@@ -83,7 +95,7 @@ if st.sidebar.button("💾 حفظ وإقفال البيانات الحالية")
     st.session_state["tele_token"] = tele_token_input
     st.session_state["tele_chat_id"] = tele_chat_input
     st.session_state["x_auth_token"] = x_auth_input
-    st.sidebar.success("✅ تم حفظ جميع الحسابات في الجلسة بنجاح!")
+    st.sidebar.success("✅ تم حفظ جميع الحسابات وتثبيتها بنجاح!")
 
 # خيارات الفيديو المطلوب
 st.subheader("🛠️ إعدادات الفيديو المطلوب")
@@ -190,11 +202,11 @@ class AutoPublisher:
                     file_input = page.locator('input[type="file"]')
                     file_input.set_input_files(self.video_path)
                     time.sleep(5)
-                    st.success("✓ تم رفع وتجهيز الفيديو على تيك توك!")
+                    st.success("✓ تم رفع وتجهيز الفيديو على تيك توك بنجاح!")
                 except Exception as e:
                     st.error(f"خطأ تيك توك: {e}")
             else:
-                st.warning("⚠️ يتطلب تيك توك ملف كوكيز النشط (tiktok_auth.json).")
+                st.warning("⚠️ يتطلب تيك توك رفع ملف الكوكيز (tiktok_auth.json) من القائمة الجانبية أولاً.")
             browser.close()
 
     def publish_to_youtube(self):
@@ -252,16 +264,4 @@ if st.button("🚀 ابدأ صناعة ونشر الفيديو الآن", type="
         st.subheader("📺 معاينة الفيديو المنتج:")
         st.video(generator.output_video_path)
         
-        tags = f"#{category} #AI #trending {custom_tags}"
-        final_caption = f"قصة جديدة مذهلة صُنعت بالذكاء الاصطناعي بالكامل 🎬🔥 \n {tags}"
-        
-        st.subheader("📤 حالة خطوط النشر التلقائي الشامل:")
-        publisher = AutoPublisher(video_path=generator.output_video_path, caption=final_caption)
-        
-        # استدعاء كافة المنصات بلا استثناء
-        publisher.publish_to_instagram()
-        publisher.publish_to_tiktok()
-        publisher.publish_to_youtube()
-        publisher.publish_to_facebook()
-        publisher.publish_to_telegram()
-        publisher.publish_to_x()
+        tags
