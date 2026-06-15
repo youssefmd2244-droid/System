@@ -1,6 +1,7 @@
-edge-tts
+streamlit
+google-generativeai
 moviepy
+edge-tts
 requests
 pillow
-google-generativeai
-streamlit
+instagrapi
