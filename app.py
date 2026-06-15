@@ -1,19 +1,8 @@
 import streamlit as st
-import os
-import sys
-import subprocess
-
-# آلية طوارئ: إجبار السيرفر على تثبيت المونتاج وتليجرام لو حصل مشكلة في السيرفر
-try:
-    from moviepy.editor import ImageClip
-    import telebot
-except ImportError:
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "moviepy==1.0.3", "pyTelegramBotAPI"])
-    from moviepy.editor import ImageClip
-    import telebot
-
 import google.generativeai as genai
+from moviepy.editor import ImageClip
 import requests
+import telebot
 
 # 1. إعدادات واجهة التطبيق
 st.set_page_config(page_title="المصنع الآلي المتكامل", layout="wide")
@@ -44,7 +33,7 @@ def create_video(api, cat):
     with open("background.jpg", "wb") as f:
         f.write(img_data)
     
-    # إنتاج الفيديو (مدته 5 ثوانٍ لضمان السرعة وعدم استهلاك موارد السيرفر)
+    # إنتاج الفيديو
     clip = ImageClip("background.jpg").set_duration(5)
     video_filename = "output_video.mp4"
     clip.write_videofile(video_filename, fps=24, codec="libx264")
@@ -79,4 +68,3 @@ if st.button("🚀 ابدأ التصنيع والنشر التلقائي"):
                 
         except Exception as e:
             st.error(f"❌ حدث خطأ تقني أثناء التشغيل: {e}")
-                                                         
