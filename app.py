@@ -1,34 +1,33 @@
 import streamlit as st
-import subprocess
-import sys
-
-# التثبيت الذاتي للمكتبات
-def setup():
-    libs = ["streamlit", "google-generativeai", "moviepy", "edge-tts", "requests", "pillow"]
-    for lib in libs:
-        try: __import__(lib.replace("-", "_"))
-        except: subprocess.check_call([sys.executable, "-m", "pip", "install", lib])
-setup()
-
 import google.generativeai as genai
-from moviepy.editor import ImageClip, AudioFileClip
+from moviepy.editor import ImageClip, AudioFileClip, TextClip, CompositeVideoClip
 import requests
 
-st.title("🤖 المصنع الآلي")
+st.title("🤖 مصنع الفيديوهات الاحترافي")
 
-api = st.text_input("Gemini API Key:", type="password")
-cat = st.selectbox("المجال:", ["horror", "anime", "motivation"])
+# وضع الـ API
+api_key = st.text_input("Gemini API Key:", type="password")
 
-if st.button("🚀 ابدأ العمل"):
-    if not api:
-        st.error("الرجاء وضع الـ API Key")
+if st.button("صناعة الفيديو"):
+    if api_key:
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        # 1. السكريبت
+        script = model.generate_content("اكتب جملة تحفيزية قصيرة جداً").text
+        st.write(script)
+        
+        # 2. تحميل صورة عشوائية
+        img_data = requests.get("https://picsum.photos/1080/1920").content
+        with open("bg.jpg", "wb") as f: f.write(img_data)
+        
+        # 3. المونتاج (إنشاء الفيديو)
+        clip = ImageClip("bg.jpg").set_duration(5)
+        # هنا سنحفظ الفيديو في المجلد
+        clip.write_videofile("output.mp4", fps=24)
+        
+        st.success("تم إنتاج الفيديو بنجاح!")
+        with open("output.mp4", "rb") as file:
+            st.download_button("تحميل الفيديو", file, "video.mp4")
     else:
-        try:
-            genai.configure(api_key=api)
-            # الموديل المضمون للعمل
-            model = genai.GenerativeModel('gemini-1.0-pro')
-            response = model.generate_content(f"اكتب سكريبت 30 ثانية عن {cat}")
-            st.write(response.text)
-            st.success("تم الاتصال بجوجل بنجاح!")
-        except Exception as e:
-            st.error(f"خطأ: {e}")
+        st.error("أدخل المفتاح!")
