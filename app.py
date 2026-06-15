@@ -78,7 +78,8 @@ class VideoGenerator:
     def create_script(self):
         st.info("🤖 جاري كتابة السكريبت بالذكاء الاصطناعي عبر Gemini...")
         genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-pro')
+        # التعديل هنا: استخدام الموديل الأحدث المتوافق لمنع خطأ الـ NotFound
+        model = genai.GenerativeModel('gemini-1.5-flash')
         prompt = (f"Write a short, highly engaging 30-second viral video script about a {self.category} story. "
                   f"Make it dramatic and optimized for {self.platform}. "
                   f"Output ONLY the spoken Arabic text (باللهجة المصرية أو العربية الفصحى المشوقة حسب المناسب)، "
