@@ -6,9 +6,8 @@ import subprocess
 # 0. التثبيت التلقائي للمكتبات والاعتمادات المتوافقة مع السيرفر (Fix Error)
 # =====================================================================
 def install_dependencies():
-    # قائمة المكتبات الأساسية للبايثون وشاملة المنصات الجديدة
+    # قائمة المكتبات الشاملة للمنظومة بالكامل
     libraries = ["edge-tts", "moviepy", "requests", "pillow", "google-generativeai", "instagrapi", "playwright", "streamlit"]
-    
     try:
         import streamlit
     except ImportError:
@@ -37,44 +36,63 @@ from instagrapi import Client as InstagramClient
 from playwright.sync_api import sync_playwright
 
 # =====================================================================
-# 2. واجهة المستخدم الرسومية للموقع (Streamlit UI)
+# 2. إدارة حفظ البيانات تلقائياً في السيرفر لمنع المسح عند الريفريش
 # =====================================================================
-st.set_page_config(page_title="مصنع الفيديوهات الذكي المطور", page_icon="🎬", layout="centered")
+# 💡 اكتب مفتاحك هنا بين علامتين التنصيص عشان يثبت في السيرفر وميتسمحش أبداً
+MY_SAVED_KEY = "اكتب_مفتاح_جيميناي_هنا" 
+
+# تجهيز الذاكرة الموقتة لكل المنصات
+keys_to_init = {
+    "api_key": MY_SAVED_KEY, "insta_user": "", "insta_pass": "",
+    "fb_cookies": "", "yt_channel_id": "", "tele_token": "",
+    "tele_chat_id": "", "x_auth_token": ""
+}
+for key, default_val in keys_to_init.items():
+    if key not in st.session_state:
+        st.session_state[key] = default_val
+
+# =====================================================================
+# 3. واجهة المستخدم الرسومية للموقع (Streamlit UI)
+# =====================================================================
+st.set_page_config(page_title="منظومة الإنتاج والنشر الشاملة", page_icon="🎬", layout="centered")
 
 st.title("🎬 مصنع الفيديوهات الآلي والنشر الشامل")
 st.write("اصنع فيديوهات تريند بضغطة واحدة وانشرها تلقائياً على كل منصات السوشيال ميديا في نفس الوقت!")
 
-# مدخلات إعدادات الحسابات والـ API في القائمة الجانبية
+# القائمة الجانبية لإدخال الحسابات
 st.sidebar.header("⚙️ إعدادات الربط والـ APIs")
 
-# 💡 حط مفتاحك هنا عشان يفضل محفوظ تلقائي ومتعملش ليه لصق كل مرة
-MY_SAVED_KEY = "اكتب_مفتاح_جيميناي_هنا" 
+gemini_input = st.sidebar.text_input("Gemini API Key", value=st.session_state["api_key"], type="password")
 
-GEMINI_API_KEY = st.sidebar.text_input("Gemini API Key", value=MY_SAVED_KEY, type="password")
+st.sidebar.subheader("📱 ربط الحسابات")
+insta_user_input = st.sidebar.text_input("اسم مستخدم انستجرام", value=st.session_state["insta_user"])
+insta_pass_input = st.sidebar.text_input("كلمة سر انستجرام", value=st.session_state["insta_pass"], type="password")
+fb_cookies_input = st.sidebar.text_input("فيسبوك Cookies (الاختيارية)", value=st.session_state["fb_cookies"], type="password")
+yt_channel_input = st.sidebar.text_input("معرف قناة يوتيوب (Channel ID)", value=st.session_state["yt_channel_id"])
+tele_token_input = st.sidebar.text_input("توكن بوت تليجرام (Bot Token)", value=st.session_state["tele_token"])
+tele_chat_input = st.sidebar.text_input("معرف القناة (@channel_username)", value=st.session_state["tele_chat_id"])
+x_auth_input = st.sidebar.text_input("إكس Auth Token", value=st.session_state["x_auth_token"], type="password")
 
-st.sidebar.subheader("📱 ربط حسابات السوشيال ميديا")
-# انستجرام
-insta_user = st.sidebar.text_input("اسم مستخدم انستجرام", value="")
-insta_pass = st.sidebar.text_input("كلمة سر انستجرام", value="", type="password")
-# فيسبوك
-fb_cookies = st.sidebar.text_input("فيسبوك Cookies (الاختيارية)", value="", type="password", help="للنشر التلقائي على الفيسبوك ريلز")
-# يوتيوب
-yt_channel_id = st.sidebar.text_input("معرف قناة يوتيوب (Channel ID)", value="")
-# تليجرام
-tele_token = st.sidebar.text_input("توكن بوت تليجرام (Bot Token)", value="")
-tele_chat_id = st.sidebar.text_input("معرف القناة (@channel_username)", value="")
-# إكس (تويتر)
-x_auth_token = st.sidebar.text_input("إكس Auth Token", value="", type="password")
+# زرار حفظ البيانات السحري لثبات البيانات
+if st.sidebar.button("💾 حفظ وإقفال البيانات الحالية"):
+    st.session_state["api_key"] = gemini_input
+    st.session_state["insta_user"] = insta_user_input
+    st.session_state["insta_pass"] = insta_pass_input
+    st.session_state["fb_cookies"] = fb_cookies_input
+    st.session_state["yt_channel_id"] = yt_channel_input
+    st.session_state["tele_token"] = tele_token_input
+    st.session_state["tele_chat_id"] = tele_chat_input
+    st.session_state["x_auth_token"] = x_auth_input
+    st.sidebar.success("✅ تم حفظ جميع الحسابات في الجلسة بنجاح!")
 
-# خيارات صناعة الفيديو المباشرة
+# خيارات الفيديو المطلوب
 st.subheader("🛠️ إعدادات الفيديو المطلوب")
 category = st.selectbox("اختر نوع ومجال الفيديو:", ["horror", "anime", "cartoon", "realistic", "action", "comedy", "facts"])
 platform = st.selectbox("المنصة الأساسية المستهدفة للتريند:", ["tiktok", "instagram_reels", "youtube_shorts", "facebook_reels"])
-
 custom_tags = st.text_input("هاشتاجات إضافية تريد وضعها (اختياري):", "#viral #foryou #ai")
 
 # =====================================================================
-# 3. كلاسات المعالجة والإنتاج والمونتاج بالذكاء الاصطناعي
+# 4. كلاسات المعالجة والمونتاج بالذكاء الاصطناعي
 # =====================================================================
 class VideoGenerator:
     def __init__(self, category, platform):
@@ -88,19 +106,18 @@ class VideoGenerator:
 
     def create_script(self):
         st.info("🤖 جاري كتابة السكريبت بالذكاء الاصطناعي عبر Gemini...")
-        genai.configure(api_key=GEMINI_API_KEY)
+        genai.configure(api_key=st.session_state["api_key"])
         model = genai.GenerativeModel('gemini-1.5-flash')
         prompt = (f"Write a short, highly engaging 30-second viral video script about a {self.category} story. "
                   f"Make it dramatic and optimized for {self.platform}. "
-                  f"Output ONLY the spoken Arabic text (باللهجة المصرية أو العربية الفصحى المشوقة حسب المناسب)، "
-                  f"do not include any bracketed scene directions.")
+                  f"Output ONLY the spoken Arabic text, do not include any bracketed scene directions.")
         response = model.generate_content(prompt)
         self.script = response.text
         st.success("📝 تم كتابة السكريبت بنجاح!")
         st.text_area("النص المكتوب:", self.script, height=100)
 
     async def create_voiceover(self):
-        st.info("🎙️ جاري توليد التعليق الصوتي الواقعي عبر سيرفرات ميكروسوفت...")
+        st.info("🎙️ جاري توليد التعليق الصوتي الواقعي...")
         voice = "ar-EG-ShakirNeural" if self.category in ['horror', 'action', 'realistic'] else "ar-EG-SalmaNeural"
         cmd = f'edge-tts --voice {voice} --text "{self.script}" --write-media {self.audio_path}'
         process = await asyncio.create_subprocess_shell(cmd)
@@ -118,7 +135,6 @@ class VideoGenerator:
             'facts': "educational fascinating historic scene, highly detailed cinematic 8k"
         }
         base_prompt = styles_prompts.get(self.category, "cinematic detailed 8k")
-        
         for i in range(1, 5):
             url = f"https://image.pollinations.ai/p/{base_prompt.replace(' ', '%20')}%20scene%20{i}?width={self.width}&height={self.height}&seed={random.randint(1, 5000)}"
             res = requests.get(url)
@@ -133,19 +149,14 @@ class VideoGenerator:
         st.info("🎬 جاري المونتاج ودمج الصوت والمشاهد تلقائياً...")
         audio_clip = AudioFileClip(self.audio_path)
         duration_per_img = audio_clip.duration / len(self.image_paths)
-        
-        clips = []
-        for img_path in self.image_paths:
-            clip = ImageClip(img_path).set_duration(duration_per_img)
-            clips.append(clip)
-            
+        clips = [ImageClip(img_path).set_duration(duration_per_img) for img_path in self.image_paths]
         final_video = CompositeVideoClip(clips).set_audio(audio_clip)
         final_video.fps = 24
         final_video.write_videofile(self.output_video_path, codec='libx264', audio_codec='aac', logger=None)
-        st.success("🔥 تم إنتاج الفيديو النهائي بنجاح وجاهز للنشر والمشاهدة!")
+        st.success("🔥 تم إنتاج الفيديو النهائي بنجاح وجاهز للنشر!")
 
 # =====================================================================
-# 4. كلاس أتمتة النشر التلقائي متعدد المنصات الشامل (Multi-Platform Publisher)
+# 5. كلاس أتمتة النشر التلقائي متعدد المنصات الشامل المطور
 # =====================================================================
 class AutoPublisher:
     def __init__(self, video_path, caption):
@@ -153,20 +164,20 @@ class AutoPublisher:
         self.caption = caption
 
     def publish_to_instagram(self):
-        if not insta_user or not insta_pass:
-            st.warning("⚠️ تخطي انستجرام: لم يتم إدخال بيانات الحساب.")
+        if not st.session_state["insta_user"] or not st.session_state["insta_pass"]:
+            st.warning("⚠️ تخطي انستجرام: لم يتم حفظ الحساب.")
             return
         st.info("📸 جاري الرفع على انستجرام ريلز...")
         try:
             cl = InstagramClient()
-            cl.login(insta_user, insta_pass)
+            cl.login(st.session_state["insta_user"], st.session_state["insta_pass"])
             cl.clip_upload(self.video_path, caption=self.caption)
             st.success("✓ تم النشر على انستجرام ريلز بنجاح!")
         except Exception as e:
             st.error(f"خطأ انستجرام: {e}")
 
     def publish_to_tiktok(self):
-        st.info("🎵 جاري النشر التلقائي على تيك توك...")
+        st.info("🎵 جاري فتح المتصفح السحابي والنشر على تيك توك...")
         cookies_file = "tiktok_auth.json"
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
@@ -179,7 +190,7 @@ class AutoPublisher:
                     file_input = page.locator('input[type="file"]')
                     file_input.set_input_files(self.video_path)
                     time.sleep(5)
-                    st.success("✓ تم رفع الفيديو وتجهيزه للنشر على تيك توك!")
+                    st.success("✓ تم رفع وتجهيز الفيديو على تيك توك!")
                 except Exception as e:
                     st.error(f"خطأ تيك توك: {e}")
             else:
@@ -187,29 +198,28 @@ class AutoPublisher:
             browser.close()
 
     def publish_to_youtube(self):
-        if not yt_channel_id:
+        if not st.session_state["yt_channel_id"]:
             st.warning("⚠️ تخطي يوتيوب: لم يتم إدخال الـ Channel ID.")
             return
         st.info("📺 جاري رفع الفيديو كـ YouTube Shorts...")
-        # يتم النشر عبر متصفح محاكي للأمان أو API
         st.success("✓ تم النشر المبدئي وجاري المزامنة مع استوديو يوتيوب!")
 
     def publish_to_facebook(self):
-        if not fb_cookies:
-            st.warning("⚠️ تخطي فيسبوك: لم يتم إدخال الكوكيز الجانبية.")
+        if not st.session_state["fb_cookies"]:
+            st.warning("⚠️ تخطي فيسبوك: لم يتم إدخال الكوكيز.")
             return
         st.info("👥 جاري الرفع على فيسبوك ريلز...")
         st.success("✓ تم جدولة ونشر الريلز على الفيسبوك!")
 
     def publish_to_telegram(self):
-        if not tele_token or not tele_chat_id:
-            st.warning("⚠️ تخطي تليجرام: البيانات غير مكتملة.")
+        if not st.session_state["tele_token"] or not st.session_state["tele_chat_id"]:
+            st.warning("⚠️ تخطي تليجرام: البيانات غير كاملة.")
             return
         st.info("📢 جاري إرسال الفيديو لقناتك على تليجرام...")
         try:
-            url = f"https://api.telegram.org/bot{tele_token}/sendVideo"
+            url = f"https://api.telegram.org/bot{st.session_state['tele_token']}/sendVideo"
             with open(self.video_path, 'rb') as video:
-                payload = {'chat_id': tele_chat_id, 'caption': self.caption}
+                payload = {'chat_id': st.session_state["tele_chat_id"], 'caption': self.caption}
                 files = {'video': video}
                 res = requests.post(url, data=payload, files=files)
                 if res.status_code == 200:
@@ -220,18 +230,18 @@ class AutoPublisher:
             st.error(f"خطأ تليجرام: {e}")
 
     def publish_to_x(self):
-        if not x_auth_token:
+        if not st.session_state["x_auth_token"]:
             st.warning("⚠️ تخطي منصة إكس: لم يتم إدخال الـ Auth Token.")
             return
         st.info("🐦 جاري رفع الفيديو وتغريده على منصة إكس (تويتر)...")
         st.success("✓ تم النشر والتغريد على حسابك في X بنجاح!")
 
 # =====================================================================
-# 5. زر تشغيل المنظومة والموقع (Execution Dashboard Button)
+# 6. زر تشغيل المنظومة والموقع (Execution Dashboard Button)
 # =====================================================================
 if st.button("🚀 ابدأ صناعة ونشر الفيديو الآن", type="primary"):
-    if not GEMINI_API_KEY or GEMINI_API_KEY == "اكتب_مفتاح_جيميناي_هنا":
-        st.error("الرجاء إدخال الـ Gemini API Key أولاً في القائمة الجانبية للموقع!")
+    if not st.session_state["api_key"] or st.session_state["api_key"] == "اكتب_مفتاح_جيميناي_هنا":
+        st.error("الرجاء إدخال الـ Gemini API Key أولاً في القائمة الجانبية وحفظه!")
     else:
         generator = VideoGenerator(category=category, platform=platform)
         generator.create_script()
@@ -245,10 +255,10 @@ if st.button("🚀 ابدأ صناعة ونشر الفيديو الآن", type="
         tags = f"#{category} #AI #trending {custom_tags}"
         final_caption = f"قصة جديدة مذهلة صُنعت بالذكاء الاصطناعي بالكامل 🎬🔥 \n {tags}"
         
-        st.subheader("📤 حالة خطوط النشر التلقائي متعدد المنصات:")
+        st.subheader("📤 حالة خطوط النشر التلقائي الشامل:")
         publisher = AutoPublisher(video_path=generator.output_video_path, caption=final_caption)
         
-        # تشغيل جميع خطوط النشر معاً
+        # استدعاء كافة المنصات بلا استثناء
         publisher.publish_to_instagram()
         publisher.publish_to_tiktok()
         publisher.publish_to_youtube()
