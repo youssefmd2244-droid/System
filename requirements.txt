@@ -1,6 +1,6 @@
 streamlit
 google-generativeai
 moviepy
-edge-tts
 requests
-pillow
+Pillow
+edge-tts
