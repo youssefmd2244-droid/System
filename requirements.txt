@@ -1,0 +1,8 @@
+streamlit
+google-generativeai
+moviepy
+requests
+Pillow
+pyTelegramBotAPI
+
+
