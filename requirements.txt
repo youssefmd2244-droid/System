@@ -1,0 +1,8 @@
+google-generativeai
+edge-tts
+moviepy
+requests
+pillow
+instagrapi
+playwright
+streamlit
