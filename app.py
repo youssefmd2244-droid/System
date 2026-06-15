@@ -1,69 +1,77 @@
 import os, sys, subprocess, asyncio, random, requests, streamlit as st
 from google import generativeai as genai
 from moviepy.editor import ImageClip, AudioFileClip, CompositeVideoClip
-from instagrapi import Client as InstagramClient
 
-# إعداد المكتبات
+# 1. تثبيت المتطلبات تلقائياً
 def setup():
-    libs = ["edge-tts", "moviepy", "requests", "pillow", "google-generativeai", "instagrapi", "streamlit"]
+    libs = ["edge-tts", "moviepy", "requests", "pillow", "google-generativeai", "streamlit"]
     for lib in libs:
         try: __import__(lib.replace("-", "_"))
         except: subprocess.check_call([sys.executable, "-m", "pip", "install", lib])
 setup()
 
-st.set_page_config(page_title="مصنع البوتات الاحترافي", layout="wide")
-st.title("🤖 مصنع الفيديوهات والنشر الجماعي (تعدد الحسابات)")
+st.set_page_config(page_title="المصنع الآلي الكامل", layout="wide")
+st.title("🤖 المصنع الآلي للفيديوهات (نسخة العمل المباشر)")
 
-# 1. نظام حفظ البيانات (الذاكرة الدائمة)
-def save_data(): st.success("تم حفظ الحسابات بنجاح!")
+# 2. نظام حفظ البيانات في ملفات (لضمان عدم المسح)
+def save_file(name, content):
+    with open(f"{name}.txt", "w") as f: f.write(content)
 
+def load_file(name):
+    if os.path.exists(f"{name}.txt"):
+        with open(f"{name}.txt", "r") as f: return f.read()
+    return ""
+
+# 3. القائمة الجانبية لإدارة الحسابات
 with st.sidebar:
     st.header("🔑 إعدادات API")
-    if "api_key" not in st.session_state: st.session_state.api_key = ""
-    st.session_state.api_key = st.text_input("Gemini API Key", value=st.session_state.api_key, type="password")
+    api_key = st.text_input("Gemini API Key", value=load_file("api"), type="password")
+    if st.button("حفظ المفتاح"): save_file("api", api_key)
     
-    st.header("📱 الحسابات (ضع كل حساب في سطر)")
-    st.session_state.insta = st.text_area("انستجرام (user:pass)", value=st.session_state.get("insta", ""))
-    st.session_state.tele = st.text_area("تليجرام (token:chat_id)", value=st.session_state.get("tele", ""))
-    st.button("حفظ الحسابات", on_click=save_data)
+    st.header("📱 الحسابات (النشر)")
+    insta_accs = st.text_area("انستجرام (user:pass)", value=load_file("insta"))
+    if st.button("حفظ الحسابات"): save_file("insta", insta_accs)
 
 category = st.selectbox("المجال:", ["horror", "anime", "facts", "motivation"])
 
-# 2. محرك العمليات
-class ProFactory:
-    def __init__(self, category, api_key):
-        self.category, self.api_key = category, api_key
+# 4. محرك التصنيع
+class Factory:
+    def __init__(self, cat, api):
+        self.cat = cat
+        self.api = api
         
-    def make_video(self):
-        genai.configure(api_key=self.api_key)
-        # محاولة الاتصال بالموديل بطريقة آمنة
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        response = model.generate_content(f"اكتب سكريبت 30 ثانية عن {self.category}. نص فقط.")
-        script = response.text
+    def generate(self):
+        genai.configure(api_key=self.api)
+        # استخدام موديل مستقر ومجاني
+        model = genai.GenerativeModel('gemini-1.0-pro')
+        response = model.generate_content(f"اكتب سكريبت فيديو تيك توك مثير 30 ثانية عن {self.cat}. نص فقط.")
+        return response.text
+
+    def create_media(self, text):
+        # توليد صوت
+        os.system(f'edge-tts --voice ar-EG-ShakirNeural --text "{text}" --write-media voice.mp3')
+        # تحميل صورة عشوائية
+        res = requests.get(f"https://image.pollinations.ai/p/cinematic%20{self.cat}?width=1080&height=1920")
+        with open("scene.jpg", "wb") as f: f.write(res.content)
         
-        # إنشاء ملفات الفيديو (صوت وصورة)
-        # ... (نفس منطق المونتاج السابق)
+        # المونتاج
+        aud = AudioFileClip("voice.mp3")
+        clip = ImageClip("scene.jpg").set_duration(aud.duration)
+        final = clip.set_audio(aud)
+        final.write_videofile("final.mp4", fps=24)
         return "final.mp4"
 
-    def publish_all(self, path):
-        # النشر على انستجرام (تعدد الحسابات)
-        if st.session_state.insta:
-            for acc in st.session_state.insta.split("\n"):
-                u, p = acc.split(":")
-                # هنا كود الرفع لكل حساب
-                st.info(f"جاري النشر عبر حساب: {u}")
-        
-        # النشر على تليجرام (تعدد الحسابات)
-        if st.session_state.tele:
-            for bot in st.session_state.tele.split("\n"):
-                t, c = bot.split(":")
-                st.info(f"جاري النشر عبر بوت: {c}")
-
-# 3. التشغيل
-if st.button("🚀 ابدأ التصنيع والنشر"):
-    if not st.session_state.api_key: st.error("أدخل الـ API Key!")
+# 5. التشغيل
+if st.button("🚀 ابدأ التصنيع الكامل"):
+    if not api_key: st.error("أدخل الـ API Key!")
     else:
-        f = ProFactory(category, st.session_state.api_key)
-        path = f.make_video()
-        f.publish_all(path)
-        st.video(path)
+        try:
+            f = Factory(category, api_key)
+            with st.spinner("جاري كتابة السكريبت وتصنيع الفيديو..."):
+                script = f.generate()
+                st.write(f"السكريبت: {script}")
+                path = f.create_media(script)
+                st.video(path)
+                st.success("تم الانتهاء!")
+        except Exception as e:
+            st.error(f"خطأ: {e}")
