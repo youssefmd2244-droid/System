@@ -1,7 +1,0 @@
-streamlit
-google-generativeai
-moviepy
-edge-tts
-requests
-pillow
-instagrapi
