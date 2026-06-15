@@ -4,11 +4,11 @@ from moviepy.editor import ImageClip
 import requests
 import telebot
 
-# 1. إعدادات واجهة التطبيق
+# 1. واجهة التطبيق
 st.set_page_config(page_title="المصنع الآلي المتكامل", layout="wide")
 st.title("🤖 المصنع الآلي المتكامل")
 
-# 2. القائمة الجانبية للإعدادات
+# 2. الإعدادات الجانبية
 with st.sidebar:
     st.header("إعدادات الربط والنشر")
     api_key = st.text_input("Gemini API Key:", type="password")
@@ -16,55 +16,50 @@ with st.sidebar:
     tele_chat_id = st.text_input("Telegram Chat ID:")
     category = st.selectbox("المجال الخاص بالفيديو:", ["horror", "anime", "motivation"])
 
-# 3. محرك صناعة الفيديو والسكريبت
+# 3. محرك الإنتاج
 def create_video(api, cat):
-    # تهيئة جيميناي بالموديل المجاني المستقر
     genai.configure(api_key=api)
     model = genai.GenerativeModel('gemini-1.5-flash')
     
     # توليد السكريبت
-    prompt = f"اكتب سكريبت فيديو قصير ومثير لمدة 15 ثانية عن {cat}. اكتب النص فقط بدون مقدمات."
+    prompt = f"اكتب سكريبت فيديو قصير ومثير لمدة 15 ثانية عن {cat}. نص فقط وبدون مقدمات."
     response = model.generate_content(prompt)
     script_text = response.text
     
-    # تحميل صورة خلفية للفيديو
+    # تحميل صورة خلفية
     img_url = f"https://image.pollinations.ai/p/cinematic%20{cat}?width=1080&height=1920"
     img_data = requests.get(img_url).content
     with open("background.jpg", "wb") as f:
         f.write(img_data)
     
-    # إنتاج الفيديو
+    # رندر الفيديو
     clip = ImageClip("background.jpg").set_duration(5)
     video_filename = "output_video.mp4"
     clip.write_videofile(video_filename, fps=24, codec="libx264")
     
     return video_filename, script_text
 
-# 4. زر التشغيل والإنتاج
+# 4. زر التشغيل
 if st.button("🚀 ابدأ التصنيع والنشر التلقائي"):
     if not api_key:
-        st.error("⚠️ من فضلك أدخل الـ Gemini API Key في القائمة الجانبية أولاً!")
+        st.error("⚠️ أدخل الـ Gemini API Key أولاً!")
     else:
         try:
-            with st.spinner("🤖 جاري الآن كتابة السكريبت وتصنيع الفيديو... انتظر لحظة..."):
+            with st.spinner("🤖 جاري الإنتاج..."):
                 video_path, script_result = create_video(api_key, category)
                 
-                # عرض النتيجة للمستخدم داخل التطبيق
-                st.subheader("📝 السكريبت الناتج:")
+                st.subheader("📝 السكريبت:")
                 st.write(script_result)
                 
-                st.subheader("🎬 الفيديو المصنع:")
+                st.subheader("🎬 الفيديو:")
                 st.video(video_path)
                 
-                # النشر التلقائي عبر تليجرام إذا تم إدخال البيانات
+                # النشر في تليجرام
                 if tele_token and tele_chat_id:
-                    st.info("🔄 جاري نشر الفيديو تلقائياً إلى تليجرام...")
                     bot = telebot.TeleBot(tele_token)
                     with open(video_path, 'rb') as video_file:
                         bot.send_video(tele_chat_id, video_file, caption=script_result)
-                    st.success("✅ تم النشر في قناتك على تليجرام بنجاح!")
-                else:
-                    st.warning("ℹ️ تم صنع الفيديو ولكن لم يتم النشر لعدم إدخال بيانات بوت تليجرام.")
+                    st.success("✅ تم النشر في تليجرام بنجاح!")
                 
         except Exception as e:
-            st.error(f"❌ حدث خطأ تقني أثناء التشغيل: {e}")
+            st.error(f"❌ خطأ تقني: {e}")
