@@ -87,7 +87,7 @@ class VideoGenerator:
         response = model.generate_content(prompt)
         self.script = response.text
         st.success("📝 تم كتابة السكريبت بنجاح!")
-        st.text_area("النص المكتوب:", self.script, height=100)
+        st.text_area("النص المكتبوب:", self.script, height=100)
 
     async def create_voiceover(self):
         st.info("🎙️ جاري توليد التعليق الصوتي الواقعي عبر سيرفرات ميكروسوفت...")
